@@ -276,6 +276,46 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
     }
 
     @Override
+    public LeaveApplication getLeaveApplicationByLeaveId(int LeaveId){
+        String sql = """
+            SELECT
+                id,
+                leave_date,
+                days,
+                status,
+                reason,
+                employee_id
+            FROM LeaveHistory
+            WHERE id = ?
+            """;
+
+        LeaveApplication la = null;
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setInt(1, LeaveId);
+
+            try(ResultSet rs = pstmt.executeQuery()){
+                if(rs.next()){
+                    la = new LeaveApplication(
+                            rs.getInt("id"),
+                            rs.getDate("leave_date"),
+                            rs.getInt("days"),
+                            rs.getString("reason"),
+                            LeaveStatus.valueOf(rs.getString("status")),
+                            rs.getString("employee_id")
+                    );
+
+                }
+
+                return la;
+
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public List<LeaveApplication> getAllLeaveApplication(){
         String sql = """
             SELECT
@@ -524,5 +564,81 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void addNotification(Notification NotifyObj)throws  RemoteException{
+        String sql = """
+                INSERT INTO Notifications (message, employee_id)
+                VALUES (?, ?)
+                """;
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setString(1, NotifyObj.getMessage());
+            pstmt.setString(2, NotifyObj.getEmployeeId());
+
+            int affectedRows = pstmt.executeUpdate();
+
+            if(affectedRows == 0){
+                throw new SQLException("Adding Notification Failed");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<Notification> getAllNotificationByID(String EmpID) throws RemoteException{
+        String sql = """
+                SELECT id, message, is_read, created_at
+                FROM Notifications
+                WHERE employee_id = ?
+                ORDER BY created_at DESC;
+                """;
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setString(1, EmpID);
+
+            List<Notification> _lNotify = new ArrayList<>();
+
+            try(ResultSet rs = pstmt.executeQuery()){
+                while(rs.next()){
+                    Notification notification = new Notification(
+                            rs.getInt("id"),
+                            rs.getString("message"),
+                            EmpID,
+                            rs.getBoolean("is_read"),
+                            rs.getDate("created_at")
+                    );
+
+                    _lNotify.add(notification);
+                }
+                return _lNotify;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void markReadNotification(int NotificationId) throws RemoteException{
+        String sql = """
+                UPDATE notifications
+                SET is_read = 1
+                WHERE id = ?;
+                """;
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setInt(1, NotificationId);
+
+            int affectedRows = pstmt.executeUpdate();
+
+            if(affectedRows == 0){
+                throw new SQLException("Marking Notification Failed");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

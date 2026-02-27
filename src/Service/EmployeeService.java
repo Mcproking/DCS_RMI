@@ -15,7 +15,7 @@ public interface EmployeeService extends Remote {
 
     void addFamilyMember(FamilyMemberObject fmObj) throws  RemoteException;
 
-    void deleteFamilyMember(FamilyMember fm) throws RemoteException;
+    void deleteFamilyMember(FamilyMemberObject fmObj) throws RemoteException;
 
     void updateFirstName(UUID token, String fn) throws RemoteException;
 
@@ -38,4 +38,10 @@ public interface EmployeeService extends Remote {
     List<Employee> getAllEmployees(UUID token) throws RemoteException;
 
     void deleteEmployee(UUID token, Employee emp) throws RemoteException;
+
+    void triggerNotification(Notification NotifyObj) throws RemoteException;
+
+    List<Notification> getNotification(UUID token) throws RemoteException;
+
+    void markAsReadNotification(UUID token, int notificationId) throws RemoteException;
 }

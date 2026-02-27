@@ -58,10 +58,10 @@ public class EmployeeServiceImpl extends UnicastRemoteObject implements Employee
     }
 
     @Override
-    public void deleteFamilyMember(FamilyMember fm) throws RemoteException {
+    public void deleteFamilyMember(FamilyMemberObject fmObj) throws RemoteException {
 //        Employee emp = SessionManager.validate(token);
 
-        dbs.deleteFamilyMemberById(fm);
+        dbs.deleteFamilyMemberById(fmObj.getFm());
     }
 
     @Override
@@ -121,7 +121,19 @@ public class EmployeeServiceImpl extends UnicastRemoteObject implements Employee
             throw new RuntimeException("Invalid User privilege");
         }
 
+        LeaveApplication _la = dbs.getLeaveApplicationByLeaveId(leaveId);
+
+        // update then trigger
+        System.out.println("Updated Leave Application: "+ leaveId);
         dbs.updateLeaveApplication(leaveId, status);
+        System.out.println("Triggerred Notification: " + leaveId);
+        this.triggerNotification(new Notification(
+                status == LeaveStatus.APPROVED
+                    ? "Your leave has been approved."
+                    : "Your leave has been rejected.",
+                _la.getEmpID()
+        ));
+
     }
 
     @Override
@@ -159,5 +171,24 @@ public class EmployeeServiceImpl extends UnicastRemoteObject implements Employee
         as.validateHR(token);
 
         dbs.deleteEmployee(emp);
+    }
+
+    @Override
+    public void triggerNotification(Notification NotifyObj) throws RemoteException{
+        dbs.addNotification(NotifyObj);
+    }
+
+    @Override
+    public List<Notification> getNotification(UUID token) throws RemoteException{
+        Employee emp = SessionManager.validate(token);
+
+        return dbs.getAllNotificationByID(emp.getIdNumber());
+    }
+
+    @Override
+    public void markAsReadNotification(UUID token, int notificationId) throws RemoteException{
+        Employee emp = SessionManager.validate(token);
+
+        dbs.markReadNotification(notificationId);
     }
 }

@@ -1,9 +1,6 @@
 package Service;
 
-import Classes.Employee;
-import Classes.FamilyMember;
-import Classes.LeaveApplication;
-import Classes.LeaveStatus;
+import Classes.*;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -28,6 +25,8 @@ public interface DatabaseService extends Remote {
 
     List<LeaveApplication> getLeaveApplicationById(String EmpID) throws RemoteException;
 
+    LeaveApplication getLeaveApplicationByLeaveId(int LeaveId) throws RemoteException;
+
     void minusLeaveBalance(String EmpID, int minusDays) throws RemoteException;
 
     void addLeaveBalance(String EmpID, int addDays) throws RemoteException;
@@ -45,4 +44,10 @@ public interface DatabaseService extends Remote {
     List<Employee> getAllEmployees() throws RemoteException;
 
     void deleteEmployee(Employee emp) throws RemoteException;
+
+    void addNotification(Notification NotifyObj) throws RemoteException;
+
+    List<Notification> getAllNotificationByID(String EmpID) throws RemoteException;
+
+    void markReadNotification(int NotificationId) throws RemoteException;
 }
