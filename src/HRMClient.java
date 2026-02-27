@@ -823,7 +823,9 @@ public class HRMClient {
             return;
         }
 
-        employeeService.deleteFamilyMember(familyList.get(index - 1));
+        employeeService.deleteFamilyMember(
+                new FamilyMemberObject(token, familyList.get(index - 1))
+        );
         System.out.println("Family member deleted successfully.");
     }
 

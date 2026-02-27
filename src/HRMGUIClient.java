@@ -1,7 +1,8 @@
 import Classes.*;
 import DataObject.FamilyMemberObject;
 import DataObject.LeaveApplicationObject;
-import DataObject.LoginRequeimport Service.AuthService;
+import DataObject.LoginRequest;
+import Service.AuthService;
 import Service.EmployeeService;
 
 import javax.swing.*;
@@ -764,7 +765,7 @@ public class HRMGUIClient extends JFrame {
             if (selectedRow >= 0) {
                 int notifId = (int) notifTableModel.getValueAt(selectedRow, 0);
                 try {
-                    employeeService.markNotificationRead(token, notifId);
+                    employeeService.markAsReadNotification(token, notifId);
                     updateNotificationPanel();
                     JOptionPane.showMessageDialog(this, "Notification marked as read");
                 } catch (Exception ex) {
@@ -793,12 +794,12 @@ public class HRMGUIClient extends JFrame {
     private void updateNotificationPanel() {
         try {
             notifTableModel.setRowCount(0);
-            List<Notification> notifications = employeeService.getNotifications(token);
+            List<Notification> notifications = employeeService.getNotification(token);
             if (notifications != null) {
                 for (Notification n : notifications) {
                     notifTableModel.addRow(new Object[] {
                             n.getId(),
-                            n.getCreatedAt(),
+                            n.getCreatedAt().toString(),
                             n.getMessage(),
                             n.isRead() ? "Read" : "Unread"
                     });

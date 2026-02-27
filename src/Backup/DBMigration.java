@@ -11,14 +11,17 @@ public class DBMigration {
             Connection conn = DriverManager.getConnection("jdbc:sqlite:database.db");
             Statement stmt = conn.createStatement();
 
-            String sql = "CREATE TABLE IF NOT EXISTS Notifications (\n" +
-                    "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n" +
-                    "    message TEXT NOT NULL,\n" +
-                    "    employee_id VARCHAR(50) NOT NULL,\n" +
-                    "    is_read BOOLEAN DEFAULT 0,\n" +
-                    "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n" +
-                    "    FOREIGN KEY (employee_id) REFERENCES Employees(UserId) ON DELETE CASCADE\n" +
-                    ");";
+            String sql = """
+                CREATE TABLE IF NOT EXISTS Notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    message TEXT NOT NULL,
+                    employee_id VARCHAR(50) NOT NULL,
+                    is_read INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (employee_id) REFERENCES Employees(id) ON DELETE CASCADE ON UPDATE CASCADE
+                );
+                """;
+            stmt.execute("PRAGMA foreign_keys = ON");
             stmt.execute(sql);
             System.out.println("Notifications table created successfully.");
         } catch (SQLException e) {
