@@ -204,6 +204,7 @@ public class HRMGUIClient extends JFrame {
     private JLabel profileLastNameLabel = new JLabel();
     private JLabel profileIdLabel = new JLabel();
     private JLabel profileRoleLabel = new JLabel();
+    private JLabel profileLeaveBalanceLabel = new JLabel();
     private DefaultTableModel familyTableModel;
     private JTable familyTable;
 
@@ -212,7 +213,7 @@ public class HRMGUIClient extends JFrame {
         profilePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Top: Profile Info
-        JPanel infoPanel = new JPanel(new GridLayout(5, 2, 5, 5));
+        JPanel infoPanel = new JPanel(new GridLayout(6, 2, 5, 5));
         infoPanel.setBorder(BorderFactory.createTitledBorder("Profile Information"));
 
         infoPanel.add(new JLabel("First Name:"));
@@ -223,6 +224,8 @@ public class HRMGUIClient extends JFrame {
         infoPanel.add(profileIdLabel);
         infoPanel.add(new JLabel("Role:"));
         infoPanel.add(profileRoleLabel);
+        infoPanel.add(new JLabel("Leave Balance:"));
+        infoPanel.add(profileLeaveBalanceLabel);
 
         JButton editNameBtn = new JButton("Edit Name");
         infoPanel.add(editNameBtn);
@@ -293,6 +296,7 @@ public class HRMGUIClient extends JFrame {
             profileLastNameLabel.setText(currentEmployee.getLastName());
             profileIdLabel.setText(currentEmployee.getIdNumber());
             profileRoleLabel.setText(currentEmployee.getRole().toString());
+            profileLeaveBalanceLabel.setText(String.valueOf(currentEmployee.getLeaveBalance()));
 
             refreshFamilyTable();
         }

@@ -16,8 +16,8 @@ public class Employee implements Serializable {
     private List<LeaveApplication> leaveHistory;
     private int leaveBalance;
 
-    public Employee(){}
-
+    public Employee() {
+    }
 
     public Employee(String firstName, String lastName, String idNumber, String password, Roles role) {
         this.firstName = firstName;
@@ -58,7 +58,9 @@ public class Employee implements Serializable {
         return idNumber;
     }
 
-    public void setIdNumber(String id){this.idNumber = id;}
+    public void setIdNumber(String id) {
+        this.idNumber = id;
+    }
 
     public String getPassword() {
         return password;
