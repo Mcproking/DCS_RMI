@@ -1,0 +1,58 @@
+@echo off
+setlocal
+
+set "PROJECT_DIR=%~dp0"
+pushd "%PROJECT_DIR%" >nul
+
+call :resolve_java
+if errorlevel 1 goto :fail
+
+if not exist "target\classes" mkdir "target\classes"
+
+set "SOURCE_LIST=%TEMP%\rmi-sources-%RANDOM%-%RANDOM%.txt"
+dir /s /b "src\main\java\*.java" > "%SOURCE_LIST%"
+
+if not exist "%SOURCE_LIST%" (
+    echo No Java source files were found.
+    goto :cleanup_fail
+)
+
+for %%A in ("%SOURCE_LIST%") do if %%~zA==0 (
+    echo No Java source files were found.
+    goto :cleanup_fail
+)
+
+echo Compiling sources...
+javac -cp "lib/*" -d "target\classes" @"%SOURCE_LIST%"
+if errorlevel 1 goto :cleanup_fail
+
+echo Build completed successfully.
+del "%SOURCE_LIST%" >nul 2>&1
+popd >nul
+exit /b 0
+
+:cleanup_fail
+del "%SOURCE_LIST%" >nul 2>&1
+:fail
+popd >nul
+exit /b 1
+
+:resolve_java
+if defined JAVA_HOME (
+    set "PATH=%JAVA_HOME%\bin;%PATH%"
+)
+
+where javac >nul 2>&1
+if %ERRORLEVEL%==0 exit /b 0
+
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "$jdkKey = Get-ChildItem 'HKLM:\SOFTWARE\JavaSoft\JDK' | Sort-Object PSChildName -Descending | Select-Object -First 1 -ExpandProperty Name; if ($jdkKey) { (Get-ItemProperty ('Registry::' + $jdkKey)).JavaHome }"`) do set "JAVA_HOME=%%I"
+
+if defined JAVA_HOME (
+    set "PATH=%JAVA_HOME%\bin;%PATH%"
+)
+
+where javac >nul 2>&1
+if %ERRORLEVEL%==0 exit /b 0
+
+echo JDK not found. Install Java and make sure javac is available.
+exit /b 1
