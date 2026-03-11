@@ -4,6 +4,7 @@ import DataObject.LeaveApplicationObject;
 import DataObject.LoginRequest;
 import Service.AuthService;
 import Service.EmployeeService;
+import Service.PayrollService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class HRMGUIClient extends JFrame {
     private AuthService authService;
     private EmployeeService employeeService;
+    private PayrollService payrollService;
     private UUID token;
 
     private CardLayout cardLayout;
@@ -39,6 +41,7 @@ public class HRMGUIClient extends JFrame {
         try {
             authService = (AuthService) Naming.lookup("rmi://localhost:1099/login");
             employeeService = (EmployeeService) Naming.lookup("rmi://localhost:1099/employee");
+            payrollService = (PayrollService) Naming.lookup("rmi://localhost:1100/payroll");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Could not connect to server: " + e.getMessage(), "Connection Error",
                     JOptionPane.ERROR_MESSAGE);
@@ -205,6 +208,8 @@ public class HRMGUIClient extends JFrame {
     private JLabel profileIdLabel = new JLabel();
     private JLabel profileRoleLabel = new JLabel();
     private JLabel profileLeaveBalanceLabel = new JLabel();
+    private JLabel profileICLabel = new JLabel();
+    private JLabel profileBasicSalaryLabel = new JLabel();
     private DefaultTableModel familyTableModel;
     private JTable familyTable;
 
@@ -213,7 +218,7 @@ public class HRMGUIClient extends JFrame {
         profilePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Top: Profile Info
-        JPanel infoPanel = new JPanel(new GridLayout(6, 2, 5, 5));
+        JPanel infoPanel = new JPanel(new GridLayout(8, 2, 5, 5));
         infoPanel.setBorder(BorderFactory.createTitledBorder("Profile Information"));
 
         infoPanel.add(new JLabel("First Name:"));
@@ -226,6 +231,10 @@ public class HRMGUIClient extends JFrame {
         infoPanel.add(profileRoleLabel);
         infoPanel.add(new JLabel("Leave Balance:"));
         infoPanel.add(profileLeaveBalanceLabel);
+        infoPanel.add(new JLabel("IC:"));
+        infoPanel.add(profileICLabel);
+        infoPanel.add(new JLabel("Basic Salary:"));
+        infoPanel.add(profileBasicSalaryLabel);
 
         JButton editNameBtn = new JButton("Edit Name");
         infoPanel.add(editNameBtn);
@@ -297,6 +306,8 @@ public class HRMGUIClient extends JFrame {
             profileIdLabel.setText(currentEmployee.getIdNumber());
             profileRoleLabel.setText(currentEmployee.getRole().toString());
             profileLeaveBalanceLabel.setText(String.valueOf(currentEmployee.getLeaveBalance()));
+            profileICLabel.setText(currentEmployee.getIC() != null ? currentEmployee.getIC() : "N/A");
+            profileBasicSalaryLabel.setText(currentEmployee.getBasicSalary() > 0 ? String.valueOf(currentEmployee.getBasicSalary()) : "N/A");
 
             refreshFamilyTable();
         }
@@ -591,6 +602,7 @@ public class HRMGUIClient extends JFrame {
     // --- Admin (Employee Management) Panel ---
     private DefaultTableModel empTableModel;
     private JTable empTable;
+    private JComboBox<Employee> payrollEmployeeCombo;
 
     private void initAdminPanel() {
         JPanel adminPanel = new JPanel(new BorderLayout(10, 10));
@@ -619,12 +631,23 @@ public class HRMGUIClient extends JFrame {
         JButton addEmpBtn = new JButton("Add Employee");
         JButton deleteEmpBtn = new JButton("Delete Employee");
         JButton refreshBtn = new JButton("Refresh List");
+        payrollEmployeeCombo = new JComboBox<>();
+        JButton payrollBtn = new JButton("Run Payroll");
+        JButton yearlyReportBtn = new JButton("Generate yearly report");
 
         rightBtnPanel.add(addEmpBtn);
         rightBtnPanel.add(Box.createVerticalStrut(10));
         rightBtnPanel.add(deleteEmpBtn);
         rightBtnPanel.add(Box.createVerticalStrut(10));
         rightBtnPanel.add(refreshBtn);
+        rightBtnPanel.add(Box.createVerticalStrut(20));
+        rightBtnPanel.add(new JLabel("Payroll (HR Only)"));
+        rightBtnPanel.add(Box.createVerticalStrut(5));
+        rightBtnPanel.add(payrollEmployeeCombo);
+        rightBtnPanel.add(Box.createVerticalStrut(10));
+        rightBtnPanel.add(payrollBtn);
+        rightBtnPanel.add(Box.createVerticalStrut(20));
+        rightBtnPanel.add(yearlyReportBtn);
 
         // Add padding to rightBtnPanel
         rightBtnPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
@@ -634,6 +657,8 @@ public class HRMGUIClient extends JFrame {
         addEmpBtn.addActionListener(e -> addEmployeeUI());
         deleteEmpBtn.addActionListener(e -> deleteEmployeeUI());
         refreshBtn.addActionListener(e -> updateAdminPanel());
+        yearlyReportBtn.addActionListener(e -> showYearlyReportUI());
+        payrollBtn.addActionListener(e -> runPayrollForSelectedEmployeeUI());
 
         // Bottom: Back Button
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -658,11 +683,167 @@ public class HRMGUIClient extends JFrame {
                             new Object[] { emp.getIdNumber(), emp.getFirstName(), emp.getLastName(), emp.getRole() });
                 }
             }
+            refreshPayrollEmployeeList(allEmployees);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error fetching employees: " + ex.getMessage(), "Error",
                     JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
+    }
+
+    private void refreshPayrollEmployeeList(List<Employee> allEmployees) {
+        payrollEmployeeCombo.removeAllItems();
+        if (allEmployees == null) {
+            return;
+        }
+
+        for (Employee emp : allEmployees) {
+            if (emp.getRole() == Roles.EMPLOYEE) {
+                payrollEmployeeCombo.addItem(emp);
+            }
+        }
+    }
+
+    private void runPayrollForSelectedEmployeeUI() {
+        Employee selectedEmp = (Employee) payrollEmployeeCombo.getSelectedItem();
+        if (selectedEmp == null) {
+            JOptionPane.showMessageDialog(this, "Please select an employee for payroll.");
+            return;
+        }
+
+        try {
+            Payroll payrollResult = payrollService.updatePayroll(token, new Payroll(selectedEmp.getIdNumber()));
+            JOptionPane.showMessageDialog(this,
+                "Payroll updated for " + selectedEmp.getFirstName() + " " + selectedEmp.getLastName() + "\n"
+                    + "Total Leave: " +payrollResult.getTotal_Leave() + "\n"
+                    + "Deducted Salary: " + payrollResult.getDeductedSalary() + "\n"
+                    + "Final Salary: " + payrollResult.getFinalSalary());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error updating payroll: " + ex.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showYearlyReportUI() {
+        if (currentEmployee == null || currentEmployee.getRole() != Roles.HR) {
+            JOptionPane.showMessageDialog(this, "Only HR can generate yearly report.");
+            return;
+        }
+
+        try {
+            List<Employee> allEmployees = employeeService.getAllEmployees(token);
+            if (allEmployees == null || allEmployees.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No employees found.");
+                return;
+            }
+
+            JDialog reportDialog = new JDialog(this, "Yearly Report", true);
+            reportDialog.setSize(900, 650);
+            reportDialog.setLocationRelativeTo(this);
+            reportDialog.setLayout(new BorderLayout(10, 10));
+
+            JTabbedPane employeeTabs = new JTabbedPane();
+
+            for (Employee emp : allEmployees) {
+                JPanel employeeReportPanel = new JPanel(new BorderLayout());
+                JTabbedPane detailsTabs = new JTabbedPane();
+
+                detailsTabs.addTab("Profile", buildProfileReportPanel(emp));
+
+                List<FamilyMember> familyMembers = employeeService.getFamilyMembersByEmployeeId(token,
+                        emp.getIdNumber());
+                detailsTabs.addTab("Family Details", buildFamilyReportPanel(familyMembers));
+
+                List<LeaveApplication> leaveHistory = employeeService.getLeaveApplicationsByEmployeeId(token,
+                        emp.getIdNumber());
+                detailsTabs.addTab("Leave History", buildLeaveReportPanel(leaveHistory));
+
+                employeeReportPanel.add(detailsTabs, BorderLayout.CENTER);
+                String tabName = emp.getFirstName() + " " + emp.getLastName() + " (" + emp.getIdNumber() + ")";
+                employeeTabs.addTab(tabName, employeeReportPanel);
+            }
+
+            JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton closeBtn = new JButton("Close");
+            closeBtn.addActionListener(e -> reportDialog.dispose());
+            bottomPanel.add(closeBtn);
+
+            reportDialog.add(employeeTabs, BorderLayout.CENTER);
+            reportDialog.add(bottomPanel, BorderLayout.SOUTH);
+            reportDialog.setVisible(true);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error generating yearly report: " + ex.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private JPanel buildProfileReportPanel(Employee emp) {
+        JPanel profilePanel = new JPanel(new GridLayout(7, 2, 8, 8));
+        profilePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        profilePanel.add(new JLabel("First Name:"));
+        profilePanel.add(new JLabel(emp.getFirstName()));
+        profilePanel.add(new JLabel("Last Name:"));
+        profilePanel.add(new JLabel(emp.getLastName()));
+        profilePanel.add(new JLabel("ID Number:"));
+        profilePanel.add(new JLabel(emp.getIdNumber()));
+        profilePanel.add(new JLabel("Role:"));
+        profilePanel.add(new JLabel(emp.getRole().toString()));
+        profilePanel.add(new JLabel("Leave Balance:"));
+        profilePanel.add(new JLabel(String.valueOf(emp.getLeaveBalance())));
+        profilePanel.add(new JLabel("IC:"));
+        profilePanel.add(new JLabel(emp.getIC() != null ? emp.getIC() : "N/A"));
+        profilePanel.add(new JLabel("Basic Salary:"));
+        profilePanel.add(new JLabel(String.valueOf(emp.getBasicSalary())));
+
+        return profilePanel;
+    }
+
+    private JPanel buildFamilyReportPanel(List<FamilyMember> familyMembers) {
+        JPanel familyPanel = new JPanel(new BorderLayout());
+        DefaultTableModel familyModel = new DefaultTableModel(new String[] { "Name", "Relationship" }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        if (familyMembers != null) {
+            for (FamilyMember member : familyMembers) {
+                familyModel.addRow(new Object[] { member.getName(), member.getRelationship() });
+            }
+        }
+
+        JTable familyHistoryTable = new JTable(familyModel);
+        familyPanel.add(new JScrollPane(familyHistoryTable), BorderLayout.CENTER);
+        return familyPanel;
+    }
+
+    private JPanel buildLeaveReportPanel(List<LeaveApplication> leaveHistory) {
+        JPanel leavePanel = new JPanel(new BorderLayout());
+        DefaultTableModel leaveModel = new DefaultTableModel(new String[] { "ID", "Start Date", "Days", "Reason", "Status" },
+                0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        if (leaveHistory != null) {
+            for (LeaveApplication leave : leaveHistory) {
+                leaveModel.addRow(new Object[] {
+                        leave.getId(),
+                        leave.getStartDate(),
+                        leave.getDays(),
+                        leave.getReason(),
+                        leave.getStatus()
+                });
+            }
+        }
+
+        JTable leaveHistoryTable = new JTable(leaveModel);
+        leavePanel.add(new JScrollPane(leaveHistoryTable), BorderLayout.CENTER);
+        return leavePanel;
     }
 
     private void addEmployeeUI() {
