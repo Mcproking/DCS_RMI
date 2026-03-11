@@ -11,19 +11,51 @@ public class DBMigration {
             Connection conn = DriverManager.getConnection("jdbc:sqlite:database.db");
             Statement stmt = conn.createStatement();
 
-            String sql = """
-                CREATE TABLE IF NOT EXISTS Notifications (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    message TEXT NOT NULL,
-                    employee_id VARCHAR(50) NOT NULL,
-                    is_read INTEGER DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (employee_id) REFERENCES Employees(id) ON DELETE CASCADE ON UPDATE CASCADE
-                );
-                """;
             stmt.execute("PRAGMA foreign_keys = ON");
-            stmt.execute(sql);
-            System.out.println("Notifications table created successfully.");
+
+            // Add IC column if it doesn't exist
+            try {
+                stmt.execute("ALTER TABLE Employees ADD COLUMN IC VARCHAR(50)");
+                System.out.println("Added IC column to Employees table.");
+            } catch (SQLException e) {
+                System.out.println("IC column already exists.");
+            }
+
+            // Add basic_salary column if it doesn't exist
+            try {
+                stmt.execute("ALTER TABLE Employees ADD COLUMN basic_salary INTEGER");
+                System.out.println("Added basic_salary column to Employees table.");
+            } catch (SQLException e) {
+                System.out.println("basic_salary column already exists.");
+            }
+
+            // Insert 3 dummy employees
+            try {
+                stmt.execute("INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance, IC, basic_salary) " +
+                        "VALUES ('EMP004', 'John', 'Doe', 'emp001pass', 'EMPLOYEE', 20, '123456789012', 5000)");
+                System.out.println("Inserted EMP001 - John Doe.");
+            } catch (SQLException e) {
+                System.out.println("EMP001 already exists or error occurred: " + e.getMessage());
+            }
+
+            try {
+                stmt.execute("INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance, IC, basic_salary) " +
+                        "VALUES ('EMP002', 'Jane', 'Smith', 'emp002pass', 'EMPLOYEE', 20, '234567890123', 5500)");
+                System.out.println("Inserted EMP002 - Jane Smith.");
+            } catch (SQLException e) {
+                System.out.println("EMP002 already exists or error occurred: " + e.getMessage());
+            }
+
+            try {
+                stmt.execute("INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance, IC, basic_salary) " +
+                        "VALUES ('EMP003', 'Mike', 'Johnson', 'emp003pass', 'HR', 20, '345678901234', 7000)");
+                System.out.println("Inserted EMP003 - Mike Johnson (HR).");
+            } catch (SQLException e) {
+                System.out.println("EMP003 already exists or error occurred: " + e.getMessage());
+            }
+
+            System.out.println("Migration completed successfully.");
+            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }

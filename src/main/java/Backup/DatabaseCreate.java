@@ -15,6 +15,8 @@ public class DatabaseCreate {
                     password VARCHAR(255) NOT NULL,
                     role VARCHAR(50) NOT NULL,
                     leave_balance INTEGER DEFAULT 0,
+                    IC VARCHAR(50),
+                    basic_salary INTEGER,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
                 """;
