@@ -15,6 +15,8 @@ public class Employee implements Serializable {
     private List<FamilyMember> familyDetails;
     private List<LeaveApplication> leaveHistory;
     private int leaveBalance;
+    private String IC;
+    private int basicSalary;
 
     public Employee() {
     }
@@ -92,6 +94,22 @@ public class Employee implements Serializable {
 
     public void setLeaveBalance(int balance) {
         this.leaveBalance = balance;
+    }
+
+    public String getIC() {
+        return IC;
+    }
+
+    public void setIC(String IC) {
+        this.IC = IC;
+    }
+
+    public int getBasicSalary() {
+        return basicSalary;
+    }
+
+    public void setBasicSalary(int basicSalary) {
+        this.basicSalary = basicSalary;
     }
 
     @Override
