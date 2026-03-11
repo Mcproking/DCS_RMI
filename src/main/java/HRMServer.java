@@ -6,14 +6,12 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class HRMServer {
-    public HRMServer(){
+    public HRMServer() {
         // have to load the db, i think of just using sqlite3
     }
 
-
-
-    public static void main(String[] args){
-        try{
+    public static void main(String[] args) {
+        try {
             LocateRegistry.createRegistry(1099);
 
             // Database Service
@@ -29,8 +27,8 @@ public class HRMServer {
 
             System.out.println("HRM Server is Running");
 
-        } catch (Exception e){
-            System.err.println("Server exception: "+e.toString());
+        } catch (Exception e) {
+            System.err.println("Server exception: " + e.toString());
         }
     }
 }
