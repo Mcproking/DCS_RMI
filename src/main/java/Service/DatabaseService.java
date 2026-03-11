@@ -9,7 +9,7 @@ import java.util.List;
 public interface DatabaseService extends Remote {
     Employee getEmployeeByIdAndPassword(String EmpID, String pw) throws RemoteException;
 
-    Employee getEmployeeById(String EmpId) throws RemoteException;
+    Employee getEmployeeByEmpId(String EmpId) throws RemoteException;
 
     List<FamilyMember> getFamilyMemberById(String EmpID) throws  RemoteException;
 
@@ -26,6 +26,8 @@ public interface DatabaseService extends Remote {
     List<LeaveApplication> getLeaveApplicationById(String EmpID) throws RemoteException;
 
     LeaveApplication getLeaveApplicationByLeaveId(int LeaveId) throws RemoteException;
+
+    int getTotalLeaveApplicationByEmpID(String EmpID) throws RemoteException;
 
     void minusLeaveBalance(String EmpID, int minusDays) throws RemoteException;
 

@@ -50,6 +50,9 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
                     emp.setLastName(rs.getString("LastName"));
                     emp.setRole(Roles.valueOf(rs.getString("role")));
                     emp.setLeaveBalance(rs.getInt("leave_balance"));
+                                        emp.setIC(rs.getString("IC"));
+                    emp.setBasicSalary(rs.getInt("basic_salary"));
+
                     return emp; // login success
                 }
             }
@@ -60,11 +63,12 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
     }
 
     @Override
-    public Employee getEmployeeById(String EmpId) throws RemoteException {
+    public Employee getEmployeeByEmpId(String EmpId) throws RemoteException {
         String sql = """
                 SELECT * FROM Employees
-                WHERE id = ?
+                WHERE UserId = ?
                 """;
+
 
         try(PreparedStatement pstmt = conn.prepareStatement(sql)){
             pstmt.setString(1,EmpId);
@@ -77,8 +81,11 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
                     emp.setLastName(rs.getString("LastName"));
                     emp.setRole(Roles.valueOf(rs.getString("role")));
                     emp.setLeaveBalance(rs.getInt("leave_balance"));
-                    return emp; // login success
+                    emp.setIC(rs.getString("IC"));
+                    emp.setBasicSalary(rs.getInt("basic_salary"));
+                    return emp;
                 }
+
             }
 
         } catch (SQLException e) {
@@ -138,8 +145,8 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
     @Override
     public List<FamilyMember> getFamilyMemberById(String EmpID) throws RemoteException {
         String sql = """
-                SELECT id, name, relationship FROM FamilyMembers
-                WHERE employee_id = ?
+                SELECT fm.id, fm.name, fm.relationship FROM FamilyMembers fm JOIN Employees e on e.id = fm.employee_id 
+                WHERE e.UserId = ?
                 """;
 
         List<FamilyMember> _lfm = new ArrayList<>();
@@ -248,7 +255,7 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
                 e.UserId
             FROM LeaveHistory lh
             JOIN Employees e ON lh.employee_id = e.id
-            WHERE e.id = ?
+            WHERE e.UserId = ?
             """;
         List<LeaveApplication> _lla = new ArrayList<>();
 
@@ -484,6 +491,31 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
     }
 
     @Override
+    public int getTotalLeaveApplicationByEmpID(String EmpID) throws RemoteException{
+        String sql = """
+                SELECT COUNT(*) AS total_leave
+                FROM LeaveHistory
+                WHERE employee_id = ?;
+                """;
+
+        int total_row = 0;
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+            pstmt.setString(1, EmpID);
+
+            try(ResultSet rs = pstmt.executeQuery()){
+                if(rs.next()){
+                    total_row = rs.getInt("total_leave");
+                }
+            }
+
+            return total_row;
+        }catch (SQLException e){
+            throw new RemoteException("Failed to update leave status", e);
+        }
+    }
+
+    @Override
     public void addEmployee(Employee emp) throws RemoteException{
         String sql = """
             INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance)
@@ -514,12 +546,7 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
     public List<Employee> getAllEmployees() throws RemoteException{
         String sql = """
             SELECT
-                UserId,
-                FirstName,
-                LastName,
-                password,
-                role,
-                created_at
+                *
             FROM Employees
             ORDER BY created_at DESC;
             """;
@@ -529,13 +556,15 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
         try(PreparedStatement pstmt = conn.prepareStatement(sql)){
             try(ResultSet rs = pstmt.executeQuery()){
                 while(rs.next()){
-                    Employee emp = new Employee(
-                        rs.getString("FirstName"),
-                        rs.getString("LastName"),
-                        rs.getString("UserId"),
-                        rs.getString("password"),
-                        Roles.valueOf(rs.getString("role"))
-                    );
+                    Employee emp = new Employee();
+                    emp.setFirstName(rs.getString("FirstName"));
+                    emp.setLastName(rs.getString("LastName"));
+                    emp.setIdNumber(rs.getString("UserId"));
+                    emp.setPassword(rs.getString("password"));
+                    emp.setRole(Roles.valueOf(rs.getString("role")));
+                    emp.setLeaveBalance(rs.getInt("leave_balance"));
+                    emp.setIC(rs.getString("IC"));
+                    emp.setBasicSalary(rs.getInt("basic_salary"));
 
                     _lemp.add(emp);
                 }
