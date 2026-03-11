@@ -10,7 +10,14 @@ if errorlevel 1 goto :fail
 if not exist "target\classes" mkdir "target\classes"
 
 set "SOURCE_LIST=%TEMP%\rmi-sources-%RANDOM%-%RANDOM%.txt"
-dir /s /b "src\main\java\*.java" > "%SOURCE_LIST%"
+if exist "%SOURCE_LIST%" del "%SOURCE_LIST%"
+setlocal enabledelayedexpansion
+for /R "src\main\java" %%I in (*.java) do (
+    set "FILE=%%I"
+    set "FILE=!FILE:\=/!"
+    echo "!FILE!">>"%SOURCE_LIST%"
+)
+endlocal
 
 if not exist "%SOURCE_LIST%" (
     echo No Java source files were found.
