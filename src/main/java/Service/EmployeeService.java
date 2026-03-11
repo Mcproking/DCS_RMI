@@ -37,6 +37,10 @@ public interface EmployeeService extends Remote {
 
     List<Employee> getAllEmployees(UUID token) throws RemoteException;
 
+    List<FamilyMember> getFamilyMembersByEmployeeId(UUID token, String employeeId) throws RemoteException;
+
+    List<LeaveApplication> getLeaveApplicationsByEmployeeId(UUID token, String employeeId) throws RemoteException;
+
     void deleteEmployee(UUID token, Employee emp) throws RemoteException;
 
     void triggerNotification(Notification NotifyObj) throws RemoteException;

@@ -167,6 +167,20 @@ public class EmployeeServiceImpl extends UnicastRemoteObject implements Employee
     }
 
     @Override
+    public List<FamilyMember> getFamilyMembersByEmployeeId(UUID token, String employeeId) throws RemoteException {
+        as.validateHR(token);
+
+        return dbs.getFamilyMemberById(employeeId);
+    }
+
+    @Override
+    public List<LeaveApplication> getLeaveApplicationsByEmployeeId(UUID token, String employeeId) throws RemoteException {
+        as.validateHR(token);
+
+        return dbs.getLeaveApplicationById(employeeId);
+    }
+
+    @Override
     public void deleteEmployee(UUID token, Employee emp) throws RemoteException{
         as.validateHR(token);
 
