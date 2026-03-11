@@ -12,6 +12,7 @@ set "MAIN_CLASS="
 if /I "%TARGET%"=="server" set "MAIN_CLASS=HRMServer"
 if /I "%TARGET%"=="gui" set "MAIN_CLASS=HRMGUIClient"
 if /I "%TARGET%"=="client" set "MAIN_CLASS=HRMClient"
+if /I "%TARGET%"=="prs" set "MAIN_CLASS=PRSServer"
 
 if not defined MAIN_CLASS goto :usage
 
@@ -28,7 +29,7 @@ popd >nul
 exit /b %EXIT_CODE%
 
 :usage
-echo Usage: run.cmd [server^|gui^|client]
+echo Usage: run.cmd [server^|gui^|client^|prs]
 popd >nul
 exit /b 1
 
