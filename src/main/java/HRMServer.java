@@ -24,10 +24,12 @@ public class HRMServer {
             // Rebind Service
             AuthService authService = new AuthServiceImpl(dbService);
             EmployeeService employeeService = new EmployeeServiceImpl(dbService, authService);
+            //PayrollService payrollService = new PayrollServiceImpl(dbService, authService);
 
             // Add service here
-            Naming.rebind("rmi://localhost/login", authService);
-            Naming.rebind("rmi://localhost/employee", employeeService);
+            Naming.rebind("rmi://localhost:1099/login", authService);
+            Naming.rebind("rmi://localhost:1099/employee", employeeService);
+            //Naming.rebind("rmi://localhost:1099/payroll", payrollService);
 
             System.out.println("HRM Server is Running");
 
