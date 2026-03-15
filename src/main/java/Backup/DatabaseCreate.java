@@ -75,10 +75,10 @@ public class DatabaseCreate {
         }
     }
 
-    public static int createHR(String uid, String fn, String ln, String pass, Connection conn, Roles role){
+    public static int createHR(String uid, String fn, String ln, String pass, Connection conn, Roles role, int leaveBalance, String IC, int basic_salary){
         String sql = """
-                INSERT INTO Employees (UserId, FirstName, LastName, password, role)
-                        VALUES (?, ?, ?, ?, ?)
+                INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance, ic, basic_salary)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (PreparedStatement pstmt =
@@ -89,6 +89,9 @@ public class DatabaseCreate {
             pstmt.setString(3, ln);
             pstmt.setString(4, pass); // ⚠ Should be hashed before storing
             pstmt.setString(5, role.toString());
+            pstmt.setInt(6, leaveBalance);
+            pstmt.setString(7, IC);
+            pstmt.setInt(8, basic_salary);
 
             int affectedRows = pstmt.executeUpdate();
 
@@ -123,8 +126,8 @@ public class DatabaseCreate {
             createLeave(conn);
 
             // add 1 HR sample
-            int temp = createHR("HR001", "HR", "Admin", "HR", conn, Roles.HR);
-            int temp2 = createHR("EMP001", "EMP", "Work", "EMP", conn, Roles.EMPLOYEE);
+            int temp = createHR("HR001", "HR", "Admin", "HR", conn, Roles.HR, 20, "112233445566778899", 2000);
+            int temp2 = createHR("EMP001", "EMP", "Work", "EMP", conn, Roles.EMPLOYEE, 20, "998877665544332211", 1500);
             System.out.println("USerid: " + temp);
             System.out.println("USerid: " + temp2);
         } catch (SQLException e) {
