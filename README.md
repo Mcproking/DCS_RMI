@@ -1,162 +1,143 @@
 # HRM RMI Project
 
-This is a Java RMI-based Human Resource Management project with:
+Java RMI-based Human Resource Management system with:
 
-- `HRMServer` for the RMI server
-- `PRSServer` for the PRS server
-- `HRMGUIClient` for the Swing GUI client
-- `HRMClient` for the console client
-- SQLite as the local database
+- `HRMServer` (main RMI server)
+- `PRSServer` (payroll-related server)
+- `HRMGUIClient` (Swing client)
+- `HRMClient` (console client)
+- SQLite local database
 
-## Java Requirement
+## Requirements
 
-This project requires:
+- Windows
+- JDK 23 (`java` and `javac` available)
 
-- Java JDK 23
-
-Why:
-
-- The project is configured with Java release `23` in `pom.xml`
-- The build scripts use `javac`, so a full JDK is required, not just a JRE
-
-Check your Java version:
+Check Java:
 
 ```cmd
 java -version
 javac -version
 ```
 
-## Project Structure
+## Quick Start (Non-Maven, recommended)
 
-Important files:
-
-- `build.cmd` compiles the project without Maven
-- `run.cmd` runs the server, GUI client, or console client
-- `database.db` is the SQLite database file
-- `lib/` contains required JDBC libraries
-
-## Run Without Maven
-
-This project includes Windows batch scripts so you can build and run it without installing Maven.
-
-### 1. Build the project
-
-```cmd
-./build.cmd
-```
-
-This compiles all Java source files into:
+From project root:
 
 ```text
-target/classes
+c:\Users\Tsundane\Desktop\RMI
 ```
 
-### 2. Run the server
+1) Build:
 
 ```cmd
-./run.cmd server
+build.cmd
 ```
 
-Expected output:
+2) Run in this order (separate terminals):
+
+```cmd
+run.cmd server
+run.cmd prs
+run.cmd gui
+```
+
+or use console client:
+
+```cmd
+run.cmd client
+```
+
+Expected server output:
 
 ```text
 Connected to SQLite
 HRM Server is Running
 ```
 
-### 3. Run the GUI client
+## Testing
 
-Open a new terminal and run:
+### Can tests run without Maven?
 
-```cmd
-./run.cmd gui
-```
+Yes, but not out-of-the-box in this repository. Test dependencies (JUnit 5 + Mockito) are managed by Maven, and there is no `test.cmd` script yet for manual classpath setup.
 
-### 4. Run the console client
+### Recommended (Maven)
 
-Open a new terminal and run:
+Resolve dependencies once:
 
 ```cmd
-./run.cmd client
+mvnw.cmd -q -DskipTests compile
 ```
 
-## Recommended Startup Order
-
-**Important:** HRM Server must be started before any other server or client.
-
-1. Start the HRM server first:
+Run all tests:
 
 ```cmd
-./.cmd server
+mvnw.cmd test
 ```
 
-Expected output:
-
-```text
-Connected to SQLite
-HRM Server is Running
-```
-
-2. Start the PRS Server (if applicable) in another terminal:
+Run one class:
 
 ```cmd
-./run.cmd prs
+mvnw.cmd -Dtest=EmployeeServiceImplTest test
 ```
 
-3. Start the GUI or console client in another terminal:
+Run one method:
 
 ```cmd
-./.cmd gui
+mvnw.cmd -Dtest=EmployeeServiceImplTest#applyLeaveWithEnoughBalanceUpdatesDbAndBalance test
 ```
 
-or
+Clean + rerun:
 
 ```cmd
-./run.cmd client
+mvnw.cmd clean test
 ```
 
-**Note:** Always ensure HRM Server (step 1) is fully initialized and running before starting the PRS Server or any client applications.
+## Maven Run (optional)
 
-## Run With Maven
-
-Maven support is also configured.
-
-If you want to use Maven:
+Build:
 
 ```cmd
-mvnw.cmd compile
+mvnw.cmd clean compile
+```
+
+Run profiles:
+
+```cmd
 mvnw.cmd -Pserver exec:java
 mvnw.cmd -Pgui exec:java
 mvnw.cmd -Pclient exec:java
 ```
 
-Note:
+## Project Structure
 
-- `mvnw.cmd` in this project depends on the local Maven setup currently present in the repo environment
-- The batch scripts are the simpler way to run this project on Windows
+- `build.cmd`: non-Maven compile script
+- `run.cmd`: run targets (`server`, `prs`, `gui`, `client`)
+- `database.db`: SQLite file
+- `lib/`: JDBC dependencies
 
 ## Troubleshooting
 
 ### `java` or `javac` not found
 
-Install JDK 23 and make sure Java is available in your system environment.
+Install JDK 23 and ensure Java is in PATH.
 
-### Server starts but client cannot connect
+### Client cannot connect
 
-Make sure:
+Ensure:
 
-- the server is already running
-- port `1099` and `1100` is available
-- client and server are running on the same machine unless you update the RMI host configuration
+- `run.cmd server` is started first
+- ports `1099` and `1100` are available
+- client/server run on the same machine (unless RMI host config is changed)
 
 ### SQLite errors
 
-Make sure these files exist:
+Ensure these exist:
 
 - `database.db`
 - `lib/sqlite-jdbc-3.49.1.0.jar`
 
 ## Notes
 
-- The project currently targets Windows because the included scripts are `.cmd` files
-- If you want Linux or macOS support, add equivalent shell scripts
+- Repo currently targets Windows (`.cmd` scripts)
+- For Linux/macOS, add equivalent shell scripts
