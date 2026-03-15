@@ -4,6 +4,7 @@ import DataObject.LeaveApplicationObject;
 import DataObject.LoginRequest;
 import Service.AuthService;
 import Service.EmployeeService;
+import Service.PayrollService;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class HRMClient {
     private static AuthService authService;
     private static EmployeeService employeeService;
+    private static PayrollService payrollService;
     private static UUID token;
 
     public static void main(String[] args) {
@@ -28,6 +30,7 @@ public class HRMClient {
 //            reg = LocateRegistry.getRegistry("rmi://localhost", 1099);
             authService = (AuthService) Naming.lookup("rmi://localhost:1099/login");
             employeeService = (EmployeeService) Naming.lookup("rmi://localhost:1099/employee");
+            payrollService = (PayrollService) Naming.lookup("rmi://localhost:1100/payroll");
             Scanner scanner = new Scanner(System.in);
 
             while (true) {
@@ -88,6 +91,7 @@ public class HRMClient {
                 System.out.println("==== USER MENU ====");
                 System.out.println("1. View Profile");
                 System.out.println("2. Leave Menu");
+                System.out.println("3. Notifications");
                 System.out.println("9. Extra Menu");
                 System.out.println("0. Logout");
                 System.out.print("Select option: ");
@@ -100,6 +104,9 @@ public class HRMClient {
                         break;
                     case "2":
                         leaveMenu(scanner);   // 👈 CALL NEW METHOD
+                        break;
+                    case "3":
+                        notificationMenu(scanner);
                         break;
                     case "9":
                         // Extra menu for HR
@@ -130,6 +137,9 @@ public class HRMClient {
                 System.out.println("Last Name   : " + emp.getLastName());
                 System.out.println("ID Number   : " + emp.getIdNumber());
                 System.out.println("Role        : " + emp.getRole());
+                System.out.println("Leave Balance: " + emp.getLeaveBalance());
+                System.out.println("IC          : " + (emp.getIC() == null ? "N/A" : emp.getIC()));
+                System.out.println("Basic Salary: " + (emp.getBasicSalary() > 0 ? emp.getBasicSalary() : "N/A"));
 
                 System.out.println("\n1. Edit Profile");
                 System.out.println("2. View Family Profile");
@@ -215,7 +225,8 @@ public class HRMClient {
         while (true) {
             System.out.println("\n==== ADMIN MENU ====");
             System.out.println("1. Employee Management");
-            System.out.println("2. Generate Yearly Report");
+            System.out.println("2. Run Payroll");
+            System.out.println("3. Generate Yearly Report");
             System.out.println("0. Back");
 
             String choice = scanner.nextLine();
@@ -225,7 +236,10 @@ public class HRMClient {
                     employeeMenu(scanner);
                     break;
                 case "2":
-//                    generateYearReport(scanner);
+                    runPayroll(scanner);
+                    break;
+                case "3":
+                    generateYearReport();
                     break;
                 case "0":
                     return;
@@ -270,21 +284,17 @@ public class HRMClient {
             System.out.println("\n==== ADD EMPLOYEE ====");
             System.out.println("Enter 0 at any time to cancel.\n");
 
-            System.out.print("First Name: ");
-            String firstName = scanner.nextLine();
-            if (firstName.equals("0")) return;
+            String firstName = readRequiredInput(scanner, "First Name: ", true);
+            if (firstName == null) return;
 
-            System.out.print("Last Name: ");
-            String lastName = scanner.nextLine();
-            if (lastName.equals("0")) return;
+            String lastName = readRequiredInput(scanner, "Last Name: ", true);
+            if (lastName == null) return;
 
-            System.out.print("Id Number: ");
-            String idNum = scanner.nextLine();
-            if (idNum.equals("0")) return;
+            String idNum = readRequiredInput(scanner, "Id Number: ", true);
+            if (idNum == null) return;
 
-            System.out.print("Password: ");
-            String pass = scanner.nextLine();
-            if (pass.equals("0")) return;
+            String pass = readRequiredInput(scanner, "Password: ", true);
+            if (pass == null) return;
 
             Roles role = selectRole(scanner);
             if (role == null) return;
@@ -302,25 +312,16 @@ public class HRMClient {
 
     public static void viewEmployeeDetails(Scanner scanner){
         List<Employee> employees = viewEmployees();
-        System.out.print("Select employee to view details: ");
-
-        String choice = scanner.nextLine();
-
-        if (choice.equals("0")) return;
-        if (employees.isEmpty()) return;
-
-        try {
-            int index = Integer.parseInt(choice) - 1;
-
-            if (index >= 0 && index < employees.size()) {
-                manageEmployee(scanner, employees.get(index));
-            } else {
-                System.out.println("Invalid selection.");
-            }
-
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
+        if (employees == null || employees.isEmpty()) {
+            return;
         }
+
+        Integer selection = readMenuNumber(scanner, "Select employee to view details (0 to cancel): ", 0, employees.size());
+        if (selection == null || selection == 0) {
+            return;
+        }
+
+        manageEmployee(scanner, employees.get(selection - 1));
     }
 
     public static void manageEmployee(Scanner scanner, Employee emp) {
@@ -451,6 +452,7 @@ public class HRMClient {
     private static void applyLeave(Scanner scanner) {
         try {
             System.out.println("\n==== APPLY LEAVE ====");
+            System.out.println("Enter 0 at any time to cancel.");
 
             Date startDate;
 
@@ -490,11 +492,15 @@ public class HRMClient {
                 }
             }
 
-            System.out.print("Number of Days: ");
-            int numberOfDays = Integer.parseInt(scanner.nextLine());
+            Integer numberOfDays = readPositiveNumber(scanner, "Number of Days: ", true);
+            if (numberOfDays == null) {
+                return;
+            }
 
-            System.out.print("Reason: ");
-            String reason = scanner.nextLine();
+            String reason = readRequiredInput(scanner, "Reason: ", true);
+            if (reason == null) {
+                return;
+            }
 
             LeaveApplicationObject laObj = new LeaveApplicationObject(token,
                     new LeaveApplication(startDate, numberOfDays, reason));
@@ -504,8 +510,6 @@ public class HRMClient {
 
             System.out.println("Leave application submitted successfully.");
 
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid number of days.");
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -522,39 +526,23 @@ public class HRMClient {
 
             viewAppliedLeaves();
 
-            System.out.print("Enter leave number to remove (0 to cancel): ");
-            String input = scanner.nextLine();
-
-            try {
-                int index = Integer.parseInt(input);
-
-                if (index == 0) {
-                    return;
-                }
-
-                if (index < 1 || index > leaves.size()) {
-                    System.out.println("Invalid selection.");
-                    return;
-                }
-
-                LeaveApplication selected = leaves.get(index - 1);
-
-                // Optional: Only allow removal if status is PENDING
-                if (!(selected.getStatus() == LeaveStatus.PENDING)) {
-                    System.out.println("Only PENDING leave can be removed.");
-                    return;
-                }
-
-                // remove leave from empservice
-                employeeService.removeLeaveApplication(new LeaveApplicationObject(
-                        token,
-                        leaves.remove(index - 1)
-                ));
-                System.out.println("Leave removed successfully.");
-
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input.");
+            Integer index = readMenuNumber(scanner, "Enter leave number to remove (0 to cancel): ", 0, leaves.size());
+            if (index == null || index == 0) {
+                return;
             }
+
+            LeaveApplication selected = leaves.get(index - 1);
+
+            if (!(selected.getStatus() == LeaveStatus.PENDING)) {
+                System.out.println("Only PENDING leave can be removed.");
+                return;
+            }
+
+            employeeService.removeLeaveApplication(new LeaveApplicationObject(
+                    token,
+                    leaves.get(index - 1)
+            ));
+            System.out.println("Leave removed successfully.");
 
         } catch (RemoteException e) {
             throw new RuntimeException(e);
@@ -575,23 +563,23 @@ public class HRMClient {
                 System.out.println("0. Back");
                 System.out.print("Select option: ");
 
-                int choice = Integer.parseInt(scanner.nextLine());
+                String choice = scanner.nextLine().trim();
 
                 switch (choice) {
 
-                    case 1:
+                    case "1":
                         listAllLeave();
                         break;
 
-                    case 2:
+                    case "2":
                         handleLeaveDecision(scanner, token, LeaveStatus.APPROVED);
                         break;
 
-                    case 3:
+                    case "3":
                         handleLeaveDecision(scanner, token, LeaveStatus.REJECTED);
                         break;
 
-                    case 0:
+                    case "0":
                         return;
 
                     default:
@@ -671,8 +659,11 @@ public class HRMClient {
                 return;
             }
 
-            System.out.print("Enter Leave ID to " + status.name().toLowerCase() + ": ");
-            int leaveId = Integer.parseInt(scanner.nextLine());
+            Integer leaveId = readPositiveNumber(scanner,
+                    "Enter Leave ID to " + status.name().toLowerCase() + " (0 to cancel): ", true);
+            if (leaveId == null) {
+                return;
+            }
 
             employeeService.updateLeaveApplication(token, leaveId, status);
 
@@ -682,6 +673,185 @@ public class HRMClient {
             System.out.println("Invalid leave ID format.");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void notificationMenu(Scanner scanner) {
+        while (true) {
+            System.out.println("\n==== NOTIFICATION MENU ====");
+            System.out.println("1. View Notifications");
+            System.out.println("2. Mark Notification as Read");
+            System.out.println("0. Back");
+            System.out.print("Enter choice: ");
+
+            String choice = scanner.nextLine();
+
+            switch (choice) {
+                case "1":
+                    viewNotifications();
+                    break;
+                case "2":
+                    markNotificationAsRead(scanner);
+                    break;
+                case "0":
+                    return;
+                default:
+                    System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    private static void viewNotifications() {
+        try {
+            List<Notification> notifications = employeeService.getNotification(token);
+
+            if (notifications == null || notifications.isEmpty()) {
+                System.out.println("No notifications found.");
+                return;
+            }
+
+            System.out.println("\n==== MY NOTIFICATIONS ====");
+            for (Notification n : notifications) {
+                System.out.println(
+                        "ID: " + n.getId() +
+                                " | Date: " + n.getCreatedAt() +
+                                " | Status: " + (n.isRead() ? "Read" : "Unread")
+                );
+                System.out.println("Message: " + n.getMessage());
+                System.out.println("------------------------------------------------");
+            }
+
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void markNotificationAsRead(Scanner scanner) {
+        try {
+            viewNotifications();
+            Integer notificationId = readPositiveNumber(scanner,
+                    "Enter notification ID to mark as read (0 to cancel): ", true);
+            if (notificationId == null) {
+                return;
+            }
+
+            employeeService.markAsReadNotification(token, notificationId);
+            System.out.println("Notification marked as read.");
+
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void runPayroll(Scanner scanner) {
+        try {
+            authService.validateHR(token);
+
+            List<Employee> employees = employeeService.getAllEmployees(token);
+            if (employees == null || employees.isEmpty()) {
+                System.out.println("No employees found.");
+                return;
+            }
+
+            System.out.println("\n==== PAYROLL EMPLOYEE LIST ====");
+            int displayIndex = 1;
+            for (Employee e : employees) {
+                if (e.getRole() == Roles.EMPLOYEE) {
+                    System.out.println(displayIndex + ". " + e.getFirstName() + " " + e.getLastName() +
+                            " (" + e.getIdNumber() + ")");
+                    displayIndex++;
+                }
+            }
+
+            if (displayIndex == 1) {
+                System.out.println("No EMPLOYEE role users available for payroll.");
+                return;
+            }
+
+            Integer selection = readMenuNumber(scanner,
+                    "Select employee number for payroll (0 to cancel): ", 0, displayIndex - 1);
+            if (selection == null || selection == 0) {
+                return;
+            }
+
+            int employeeCounter = 0;
+            Employee selectedEmployee = null;
+            for (Employee e : employees) {
+                if (e.getRole() == Roles.EMPLOYEE) {
+                    employeeCounter++;
+                    if (employeeCounter == selection) {
+                        selectedEmployee = e;
+                        break;
+                    }
+                }
+            }
+
+            if (selectedEmployee == null) {
+                System.out.println("Unable to find selected employee.");
+                return;
+            }
+
+            Payroll payroll = payrollService.updatePayroll(token, new Payroll(selectedEmployee.getIdNumber()));
+            System.out.println("\nPayroll updated for " + selectedEmployee.getFirstName() + " " + selectedEmployee.getLastName());
+            System.out.println("Total Leave   : " + payroll.getTotal_Leave());
+            System.out.println("Deducted Salary: " + payroll.getDeductedSalary());
+            System.out.println("Final Salary  : " + payroll.getFinalSalary());
+
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void generateYearReport() {
+        try {
+            authService.validateHR(token);
+
+            List<Employee> employees = employeeService.getAllEmployees(token);
+            if (employees == null || employees.isEmpty()) {
+                System.out.println("No employees found.");
+                return;
+            }
+
+            System.out.println("\n============= YEARLY REPORT =============");
+
+            for (Employee emp : employees) {
+                System.out.println("\nEMPLOYEE: " + emp.getFirstName() + " " + emp.getLastName() + " (" + emp.getIdNumber() + ")");
+                System.out.println("Role         : " + emp.getRole());
+                System.out.println("Leave Balance: " + emp.getLeaveBalance());
+                System.out.println("IC           : " + (emp.getIC() == null ? "N/A" : emp.getIC()));
+                System.out.println("Basic Salary : " + emp.getBasicSalary());
+
+                List<FamilyMember> familyMembers = employeeService.getFamilyMembersByEmployeeId(token, emp.getIdNumber());
+                System.out.println("\n  Family Details:");
+                if (familyMembers == null || familyMembers.isEmpty()) {
+                    System.out.println("  - None");
+                } else {
+                    for (FamilyMember member : familyMembers) {
+                        System.out.println("  - " + member.getName() + " (" + member.getRelationship() + ")");
+                    }
+                }
+
+                List<LeaveApplication> leaveHistory = employeeService.getLeaveApplicationsByEmployeeId(token, emp.getIdNumber());
+                System.out.println("\n  Leave History:");
+                if (leaveHistory == null || leaveHistory.isEmpty()) {
+                    System.out.println("  - None");
+                } else {
+                    for (LeaveApplication leave : leaveHistory) {
+                        System.out.println(
+                                "  - ID: " + leave.getId() +
+                                        " | Start: " + leave.getStartDate() +
+                                        " | Days: " + leave.getDays() +
+                                        " | Status: " + leave.getStatus()
+                        );
+                        System.out.println("    Reason: " + leave.getReason());
+                    }
+                }
+
+                System.out.println("-----------------------------------------");
+            }
+
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -706,15 +876,19 @@ public class HRMClient {
 
                 switch (choice) {
                     case "1":
-                        System.out.print("Enter new First Name: ");
-                        String newFirstName = scanner.nextLine();
+                        String newFirstName = readRequiredInput(scanner, "Enter new First Name: ", true);
+                        if (newFirstName == null) {
+                            break;
+                        }
                         employeeService.updateFirstName(token, newFirstName);
                         System.out.println("First name updated successfully.");
                         break;
 
                     case "2":
-                        System.out.print("Enter new Last Name: ");
-                        String newLastName = scanner.nextLine();
+                        String newLastName = readRequiredInput(scanner, "Enter new Last Name: ", true);
+                        if (newLastName == null) {
+                            break;
+                        }
                         employeeService.updateLastName(token, newLastName);
                         System.out.println("Last name updated successfully.");
                         break;
@@ -791,11 +965,15 @@ public class HRMClient {
 
     private static void addFamilyMember(Scanner scanner) throws RemoteException {
 
-        System.out.print("Enter Name: ");
-        String name = scanner.nextLine();
+        String name = readRequiredInput(scanner, "Enter Name: ", true);
+        if (name == null) {
+            return;
+        }
 
-        System.out.print("Enter Relationship: ");
-        String relationship = scanner.nextLine();
+        String relationship = readRequiredInput(scanner, "Enter Relationship: ", true);
+        if (relationship == null) {
+            return;
+        }
 
 //        FamilyMember newMember = new FamilyMember(name, relationship);
         FamilyMemberObject fmObj = new FamilyMemberObject(token,
@@ -815,8 +993,10 @@ public class HRMClient {
             return;
         }
 
-        System.out.print("Enter number to delete: ");
-        int index = scanner.nextInt();
+        Integer index = readMenuNumber(scanner, "Enter number to delete (0 to cancel): ", 0, familyList.size());
+        if (index == null || index == 0) {
+            return;
+        }
 
         if (index < 1 || index > familyList.size()) {
             System.out.println("Invalid selection.");
@@ -827,6 +1007,64 @@ public class HRMClient {
                 new FamilyMemberObject(token, familyList.get(index - 1))
         );
         System.out.println("Family member deleted successfully.");
+    }
+
+    private static String readRequiredInput(Scanner scanner, String prompt, boolean allowCancelWithZero) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+
+            if (allowCancelWithZero && "0".equals(input)) {
+                return null;
+            }
+
+            if (input.isEmpty()) {
+                System.out.println("Input cannot be empty.");
+                continue;
+            }
+
+            return input;
+        }
+    }
+
+    private static Integer readPositiveNumber(Scanner scanner, String prompt, boolean allowCancelWithZero) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+
+            if (allowCancelWithZero && "0".equals(input)) {
+                return null;
+            }
+
+            try {
+                int number = Integer.parseInt(input);
+                if (number <= 0) {
+                    System.out.println("Please enter a number greater than 0.");
+                    continue;
+                }
+                return number;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Try again.");
+            }
+        }
+    }
+
+    private static Integer readMenuNumber(Scanner scanner, String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+
+            try {
+                int number = Integer.parseInt(input);
+                if (number < min || number > max) {
+                    System.out.println("Invalid selection. Please choose between " + min + " and " + max + ".");
+                    continue;
+                }
+                return number;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Try again.");
+            }
+        }
     }
 
 }
