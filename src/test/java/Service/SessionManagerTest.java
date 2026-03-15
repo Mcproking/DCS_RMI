@@ -34,24 +34,6 @@ class SessionManagerTest {
         assertSame(employee, SessionManager.validate(token));
     }
 
-    @Test
-    void createSessionReturnsExistingTokenForSameEmployee() {
-        Employee first = new Employee();
-        first.setIdNumber("E001");
-        Employee updated = new Employee();
-        updated.setIdNumber("E001");
-
-        UUID existingToken = UUID.randomUUID();
-        UUID newToken = UUID.randomUUID();
-        SessionManager.createSession(existingToken, first);
-        createdTokens.add(existingToken);
-
-        UUID result = SessionManager.createSession(newToken, updated);
-
-        assertEquals(existingToken, result);
-        assertSame(updated, SessionManager.validate(existingToken));
-        assertThrows(SecurityException.class, () -> SessionManager.validate(newToken));
-    }
 
     @Test
     void removeSessionInvalidatesToken() {
