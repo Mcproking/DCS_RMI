@@ -7,7 +7,7 @@ import java.sql.*;
 public class DatabaseCreate {
     public static void createEmployeeTable(Connection conn){
         String sql = """
-                CREATE TABLE Employees (
+                CREATE TABLE IF NOT EXISTS Employees (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     UserId VARCHAR(100) NOT NULL UNIQUE,
                     FirstName VARCHAR(100) NOT NULL,
@@ -31,7 +31,7 @@ public class DatabaseCreate {
 
     public static void createFamilyMember(Connection conn){
         String sql = """
-                CREATE TABLE FamilyMembers (
+                CREATE TABLE IF NOT EXISTS FamilyMembers (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name VARCHAR(100) NOT NULL,
                     relationship VARCHAR(50) NOT NULL,
@@ -53,7 +53,7 @@ public class DatabaseCreate {
 
     public static void createLeave(Connection conn) {
         String sql = """
-                CREATE TABLE LeaveHistory (
+                CREATE TABLE IF NOT EXISTS LeaveHistory (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     leave_date DATE NOT NULL,
                     days INTEGER NOT NULL,
