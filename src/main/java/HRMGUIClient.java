@@ -20,6 +20,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import com.formdev.flatlaf.intellijthemes.FlatDarkPurpleIJTheme;
 
 public class HRMGUIClient extends JFrame {
     private AuthService authService;
@@ -307,7 +308,8 @@ public class HRMGUIClient extends JFrame {
             profileRoleLabel.setText(currentEmployee.getRole().toString());
             profileLeaveBalanceLabel.setText(String.valueOf(currentEmployee.getLeaveBalance()));
             profileICLabel.setText(currentEmployee.getIC() != null ? currentEmployee.getIC() : "N/A");
-            profileBasicSalaryLabel.setText(currentEmployee.getBasicSalary() > 0 ? String.valueOf(currentEmployee.getBasicSalary()) : "N/A");
+            profileBasicSalaryLabel.setText(
+                    currentEmployee.getBasicSalary() > 0 ? String.valueOf(currentEmployee.getBasicSalary()) : "N/A");
 
             refreshFamilyTable();
         }
@@ -714,10 +716,10 @@ public class HRMGUIClient extends JFrame {
         try {
             Payroll payrollResult = payrollService.updatePayroll(token, new Payroll(selectedEmp.getIdNumber()));
             JOptionPane.showMessageDialog(this,
-                "Payroll updated for " + selectedEmp.getFirstName() + " " + selectedEmp.getLastName() + "\n"
-                    + "Total Leave: " +payrollResult.getTotal_Leave() + "\n"
-                    + "Deducted Salary: " + payrollResult.getDeductedSalary() + "\n"
-                    + "Final Salary: " + payrollResult.getFinalSalary());
+                    "Payroll updated for " + selectedEmp.getFirstName() + " " + selectedEmp.getLastName() + "\n"
+                            + "Total Leave: " + payrollResult.getTotal_Leave() + "\n"
+                            + "Deducted Salary: " + payrollResult.getDeductedSalary() + "\n"
+                            + "Final Salary: " + payrollResult.getFinalSalary());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error updating payroll: " + ex.getMessage(), "Error",
                     JOptionPane.ERROR_MESSAGE);
@@ -821,7 +823,8 @@ public class HRMGUIClient extends JFrame {
 
     private JPanel buildLeaveReportPanel(List<LeaveApplication> leaveHistory) {
         JPanel leavePanel = new JPanel(new BorderLayout());
-        DefaultTableModel leaveModel = new DefaultTableModel(new String[] { "ID", "Start Date", "Days", "Reason", "Status" },
+        DefaultTableModel leaveModel = new DefaultTableModel(
+                new String[] { "ID", "Start Date", "Days", "Reason", "Status" },
                 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -1012,6 +1015,7 @@ public class HRMGUIClient extends JFrame {
     }
 
     public static void main(String[] args) {
+        FlatDarkPurpleIJTheme.setup();
         SwingUtilities.invokeLater(() -> {
             new HRMGUIClient().setVisible(true);
         });
