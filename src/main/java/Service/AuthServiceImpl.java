@@ -38,7 +38,7 @@ public class AuthServiceImpl extends UnicastRemoteObject implements AuthService 
     public void validateHR(UUID uid) throws RemoteException{
         Employee emp = Validation(uid);
 
-        if(emp.getRole().equals(Roles.EMPLOYEE)){
+        if(emp.getRole().equals(Roles.EMPLOYEE) || emp == null){
             throw new RemoteException("Invalid User privilege");
         }
     }
