@@ -850,6 +850,9 @@ public class HRMGUIClient extends JFrame {
         JTextField firstNameField = new JTextField(15);
         JTextField lastNameField = new JTextField(15);
         JTextField idNumField = new JTextField(15);
+        JTextField icNameField = new JTextField(20);
+        JTextField leaveBalanceField = new JTextField(5);
+        JTextField salaryField = new JTextField(15);
         JPasswordField passField = new JPasswordField(15);
         JComboBox<Roles> roleCombo = new JComboBox<>(Roles.values());
 
@@ -862,6 +865,12 @@ public class HRMGUIClient extends JFrame {
         myPanel.add(idNumField);
         myPanel.add(new JLabel("Password:"));
         myPanel.add(passField);
+        myPanel.add(new JLabel("IC:"));
+        myPanel.add(icNameField);
+        myPanel.add(new JLabel("Leave Balance:"));
+        myPanel.add(leaveBalanceField);
+        myPanel.add(new JLabel("Basic Salary:"));
+        myPanel.add(salaryField);
         myPanel.add(new JLabel("Role:"));
         myPanel.add(roleCombo);
 
@@ -871,6 +880,9 @@ public class HRMGUIClient extends JFrame {
             String lName = lastNameField.getText().trim();
             String idNum = idNumField.getText().trim();
             String pass = new String(passField.getPassword()).trim();
+            String ic = icNameField.getText().trim();
+            int leaveBalance = Integer.parseInt(leaveBalanceField.getText().trim());
+            int salary = Integer.parseInt(salaryField.getText().trim());
             Roles role = (Roles) roleCombo.getSelectedItem();
 
             if (fName.isEmpty() || lName.isEmpty() || idNum.isEmpty() || pass.isEmpty()) {
@@ -880,6 +892,9 @@ public class HRMGUIClient extends JFrame {
 
             try {
                 Employee newEmp = new Employee(fName, lName, idNum, pass, role);
+                newEmp.setLeaveBalance(leaveBalance);
+                newEmp.setIC(ic);
+                newEmp.setBasicSalary(salary);
                 employeeService.addEmployee(token, newEmp);
                 updateAdminPanel();
                 JOptionPane.showMessageDialog(this, "Employee added successfully.");

@@ -518,8 +518,8 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
     @Override
     public void addEmployee(Employee emp) throws RemoteException{
         String sql = """
-            INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance, IC, basic_salary)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try(PreparedStatement pstmt = conn.prepareStatement((sql))){
@@ -529,6 +529,8 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
             pstmt.setString(4, emp.getPassword());
             pstmt.setString(5, emp.getRole().name());
             pstmt.setInt(6, emp.getLeaveBalance());
+            pstmt.setString(7, emp.getIC());
+            pstmt.setInt(8, emp.getBasicSalary());
 
             int affectedRows = pstmt.executeUpdate();
 
