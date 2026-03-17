@@ -11,7 +11,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.MalformedURLException;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -42,12 +44,19 @@ public class HRMGUIClient extends JFrame {
         try {
             authService = (AuthService) Naming.lookup("rmi://localhost:1099/login");
             employeeService = (EmployeeService) Naming.lookup("rmi://localhost:1099/employee");
-            payrollService = (PayrollService) Naming.lookup("rmi://localhost:1100/payroll");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Could not connect to server: " + e.getMessage(), "Connection Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
+        
+        try {
+            payrollService = (PayrollService) Naming.lookup("rmi://localhost:1100/payroll");
+        } catch (MalformedURLException | RemoteException | NotBoundException e) {
+            JOptionPane.showMessageDialog(this, "Could not connect to PRS server: " + e.getMessage(), "Connection Error",
+            JOptionPane.ERROR_MESSAGE);
+        }
+        
 
         // Setup CardLayout
         cardLayout = new CardLayout();
@@ -710,6 +719,11 @@ public class HRMGUIClient extends JFrame {
         Employee selectedEmp = (Employee) payrollEmployeeCombo.getSelectedItem();
         if (selectedEmp == null) {
             JOptionPane.showMessageDialog(this, "Please select an employee for payroll.");
+            return;
+        }
+
+        if (payrollService == null){
+            JOptionPane.showMessageDialog(this, "PRS Server current experience issue. Try again later");
             return;
         }
 
