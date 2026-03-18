@@ -1,8 +1,13 @@
 package Backup;
 
-import Classes.Roles;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
-import java.sql.*;
+import Classes.Roles;
 
 public class DatabaseCreate {
     public static void createEmployeeTable(Connection conn){
@@ -39,7 +44,7 @@ public class DatabaseCreate {
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 
                     FOREIGN KEY (employee_id)\s
-                        REFERENCES Employees(UserId)
+                        REFERENCES Employees(id)
                         ON DELETE CASCADE
                 );
                 """;
@@ -63,7 +68,7 @@ public class DatabaseCreate {
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 
                     FOREIGN KEY (employee_id)\s
-                        REFERENCES Employees(UserId)
+                        REFERENCES Employees(id)
                         ON DELETE CASCADE
                 );
                 """;
