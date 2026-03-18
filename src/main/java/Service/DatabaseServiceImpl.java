@@ -255,7 +255,7 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
                 e.UserId
             FROM LeaveHistory lh
             JOIN Employees e ON lh.employee_id = e.id
-            WHERE e.UserId = ?
+            WHERE e.id = ?
             """;
         List<LeaveApplication> _lla = new ArrayList<>();
 
