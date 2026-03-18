@@ -146,7 +146,7 @@ public class DatabaseServiceImpl extends UnicastRemoteObject implements Database
     public List<FamilyMember> getFamilyMemberById(String EmpID) throws RemoteException {
         String sql = """
                 SELECT fm.id, fm.name, fm.relationship FROM FamilyMembers fm JOIN Employees e on e.id = fm.employee_id 
-                WHERE e.UserId = ?
+                WHERE e.id = ?
                 """;
 
         List<FamilyMember> _lfm = new ArrayList<>();
