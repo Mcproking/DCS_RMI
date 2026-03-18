@@ -75,6 +75,28 @@ public class DatabaseCreate {
         }
     }
 
+    public static void createNotification(Connection conn) {
+        String sql = """
+                CREATE TABLE IF NOT EXISTS Notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    message VARCHAR(255) NOT NULL,
+                    employee_id VARCHAR(50) NOT NULL,
+                    is_read BOOLEAN DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                    FOREIGN KEY (employee_id)
+                        REFERENCES Employees(id)
+                        ON DELETE CASCADE
+                );
+                """;
+
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static int createHR(String uid, String fn, String ln, String pass, Connection conn, Roles role, int leaveBalance, String IC, int basic_salary){
         String sql = """
                 INSERT INTO Employees (UserId, FirstName, LastName, password, role, leave_balance, ic, basic_salary)
@@ -124,6 +146,7 @@ public class DatabaseCreate {
             createEmployeeTable(conn);
             createFamilyMember(conn);
             createLeave(conn);
+            createNotification(conn);
 
             // add 1 HR sample
             int temp = createHR("HR001", "HR", "Admin", "HR", conn, Roles.HR, 20, "112233445566778899", 2000);

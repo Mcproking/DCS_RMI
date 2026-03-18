@@ -7,6 +7,29 @@ pushd "%PROJECT_DIR%" >nul
 call :resolve_java
 if errorlevel 1 goto :fail
 
+if /I "%USE_MAVEN%"=="1" if exist "mvnw.cmd" (
+    echo Building with Maven wrapper...
+    call .\mvnw.cmd -q -DskipTests compile
+    if errorlevel 1 goto :fail
+    echo Build completed successfully.
+    popd >nul
+    exit /b 0
+)
+
+if not exist "lib\flatlaf*.jar" (
+    echo Missing FlatLaf dependency in lib\ ^(expected flatlaf-*.jar^).
+    echo Add flatlaf and flatlaf-intellij-themes jars to lib\ for non-Maven builds.
+    echo Or run with Maven once: set USE_MAVEN=1 ^&^& build.cmd
+    goto :fail
+)
+
+if not exist "lib\flatlaf-intellij-themes*.jar" (
+    echo Missing FlatLaf IntelliJ themes dependency in lib\ ^(expected flatlaf-intellij-themes-*.jar^).
+    echo Add flatlaf-intellij-themes jar to lib\ for non-Maven builds.
+    echo Or run with Maven once: set USE_MAVEN=1 ^&^& build.cmd
+    goto :fail
+)
+
 if not exist "target\classes" mkdir "target\classes"
 
 set "SOURCE_LIST=%TEMP%\rmi-sources-%RANDOM%-%RANDOM%.txt"

@@ -11,7 +11,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.MalformedURLException;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -42,12 +44,19 @@ public class HRMGUIClient extends JFrame {
         try {
             authService = (AuthService) Naming.lookup("rmi://localhost:1099/login");
             employeeService = (EmployeeService) Naming.lookup("rmi://localhost:1099/employee");
-            payrollService = (PayrollService) Naming.lookup("rmi://localhost:1100/payroll");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Could not connect to server: " + e.getMessage(), "Connection Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
+        
+        try {
+            payrollService = (PayrollService) Naming.lookup("rmi://localhost:1100/payroll");
+        } catch (MalformedURLException | RemoteException | NotBoundException e) {
+            JOptionPane.showMessageDialog(this, "Could not connect to PRS server: " + e.getMessage(), "Connection Error",
+            JOptionPane.ERROR_MESSAGE);
+        }
+        
 
         // Setup CardLayout
         cardLayout = new CardLayout();
@@ -713,6 +722,11 @@ public class HRMGUIClient extends JFrame {
             return;
         }
 
+        if (payrollService == null){
+            JOptionPane.showMessageDialog(this, "PRS Server current experience issue. Try again later");
+            return;
+        }
+
         try {
             Payroll payrollResult = payrollService.updatePayroll(token, new Payroll(selectedEmp.getIdNumber()));
             JOptionPane.showMessageDialog(this,
@@ -853,6 +867,9 @@ public class HRMGUIClient extends JFrame {
         JTextField firstNameField = new JTextField(15);
         JTextField lastNameField = new JTextField(15);
         JTextField idNumField = new JTextField(15);
+        JTextField icNameField = new JTextField(20);
+        JTextField leaveBalanceField = new JTextField(5);
+        JTextField salaryField = new JTextField(15);
         JPasswordField passField = new JPasswordField(15);
         JComboBox<Roles> roleCombo = new JComboBox<>(Roles.values());
 
@@ -865,6 +882,12 @@ public class HRMGUIClient extends JFrame {
         myPanel.add(idNumField);
         myPanel.add(new JLabel("Password:"));
         myPanel.add(passField);
+        myPanel.add(new JLabel("IC:"));
+        myPanel.add(icNameField);
+        myPanel.add(new JLabel("Leave Balance:"));
+        myPanel.add(leaveBalanceField);
+        myPanel.add(new JLabel("Basic Salary:"));
+        myPanel.add(salaryField);
         myPanel.add(new JLabel("Role:"));
         myPanel.add(roleCombo);
 
@@ -874,6 +897,9 @@ public class HRMGUIClient extends JFrame {
             String lName = lastNameField.getText().trim();
             String idNum = idNumField.getText().trim();
             String pass = new String(passField.getPassword()).trim();
+            String ic = icNameField.getText().trim();
+            int leaveBalance = Integer.parseInt(leaveBalanceField.getText().trim());
+            int salary = Integer.parseInt(salaryField.getText().trim());
             Roles role = (Roles) roleCombo.getSelectedItem();
 
             if (fName.isEmpty() || lName.isEmpty() || idNum.isEmpty() || pass.isEmpty()) {
@@ -883,6 +909,9 @@ public class HRMGUIClient extends JFrame {
 
             try {
                 Employee newEmp = new Employee(fName, lName, idNum, pass, role);
+                newEmp.setLeaveBalance(leaveBalance);
+                newEmp.setIC(ic);
+                newEmp.setBasicSalary(salary);
                 employeeService.addEmployee(token, newEmp);
                 updateAdminPanel();
                 JOptionPane.showMessageDialog(this, "Employee added successfully.");

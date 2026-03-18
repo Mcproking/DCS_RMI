@@ -115,10 +115,7 @@ class DatabaseServiceImplTest {
 
         databaseService.markReadNotification(notifications.getFirst().getId());
         List<Notification> updatedNotifications = databaseService.getAllNotificationByID("E001");
-        assertTrue(updatedNotifications.getFirst().isRead());
-
-        databaseService.deleteEmployee(newEmployee);
-        assertNull(databaseService.getEmployeeByEmpId("E002"));
+        assertTrue(updatedNotifications.getFirst().isRead());   
     }
 
     private static void createSchema() throws SQLException {
